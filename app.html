@@ -2,33 +2,204 @@
 <html>
 
 <head>
-	<meta charset="utf-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1"> 
-	<title>Single page template</title> 
-	<link rel="stylesheet" href="http://code.jquery.com/mobile/1.1.1/jquery.mobile-1.1.1.min.css" />
-	<script src="http://code.jquery.com/jquery-1.7.1.min.js"></script>
-	<script src="http://code.jquery.com/mobile/1.1.1/jquery.mobile-1.1.1.min.js"></script>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1"> 
+    <title>Single page template</title> 
+    <link rel="stylesheet" href="http://code.jquery.com/mobile/1.4.0/jquery.mobile-1.4.0.min.css" />
+    <script src="http://code.jquery.com/jquery-1.7.1.min.js"></script>
+    <script src="http://code.jquery.com/mobile/1.4.0/jquery.mobile-1.4.0.min.js"></script>
+    <script src="http://code.jquery.com/ui/1.10.3/jquery-ui.min.js"></script>
+    <!--<script src="jquery.ui.touch-punch.min.js"></script>-->
+    <script src="http://cdnjs.cloudflare.com/ajax/libs/jqueryui-touch-punch/0.2.2/jquery.ui.touch-punch.min.js"></script>
+
+    <style>
+      #add > div {
+        float: left;
+        width: 80%;
+        margin-right: 14px;
+      }
+    </style>
+    <script type="text/javascript">
+
+      function permutations(list)
+      {
+          // Empty list has one permutation
+          if (list.length == 0)
+              return [[]];
+          var result = [];
+          for (var i=0; i<list.length; i++)
+          {
+              // Clone list (kind of)
+              var copy = Object.create(list);
+              // Cut one element from list
+              var head = copy.splice(i, 1);
+              // Permute rest of list
+              var rest = permutations(copy);
+              // Add head to each permutation of rest of list
+              for (var j=0; j<rest.length; j++)
+              {
+                  var next = head.concat(rest[j]);
+                  result.push(next);
+              }
+          }
+          return result;
+      }
+
+      function distinctSets(list)
+      {
+        var o = {};
+        for (var i in list)
+        {
+          o[list[i]] = true;
+        }
+        var result = [];
+        for (var i in o)
+        {
+          result.push(JSON.parse('[' + i + ']'));
+        }
+        return result;
+      }
+
+      $(function(){
+        console.log('starting...');
+        var $namesList = $('#names-list');
+        $namesList.sortable();
+        $namesList.disableSelection();
+        $namesList.bind('sortstop', function(event, ui) {
+          $namesList.listview('refresh');
+        });
+        $('#add').listview('refresh');
+
+        // Allow adding names
+        $('#add-name-button').click(function(){
+          console.log('adding player...');
+          var name = $('#add-name').val();
+          console.log('with name=' + name);
+          if (name != ''){
+            $('<li>')
+              .append(
+                 $('<a>')
+                   .attr('href', '#')
+                   .append(
+                     $('<h3>')
+                       .text(name)))
+              .append(
+                 $('<a>')
+                   .attr('href', '#')
+                   .text(' ')
+                   .click(function(){
+                     // navigate up to the <li> and remove it from the <ul>
+                     $(this).parent().remove();
+                     $namesList.listview('refresh');
+                   }))
+              .appendTo($('#names-list'));
+            $namesList.listview('refresh');
+          }
+        });
+
+        // Populate analyze page
+        $('#config-next-button').click(function(){
+          var $tbody = $('#analyze-tbody');
+          $tbody.children().remove();
+          var names = jQuery.map($('#names-list').children(), function(li){
+            return $('a > h3', li).text();
+          });
+          console.log(names);
+
+          function addCheckbox($e, player){
+            return $e.append('<input type="checkbox" name="checkbox-0">')
+                     .data('player', player);
+          }
+
+          for (var i in names){
+            var name = names[i];
+            $('<tr>')
+              .append(
+                $('<td>')
+                .text(name))
+              .append(
+                addCheckbox($('<td>'), name))
+              .append(
+                addCheckbox($('<td>'), name))
+              .appendTo($tbody);
+          }
+        });
+
+        // Make analysis checkboxes update results
+        $('#analyze-tbody').on('click', 'input', function(){
+          var $tbody = $('#analyze-tbody');
+          $tbody.children().remove();
+          var names = jQuery.map($('#names-list').children(), function(li){
+            return $('a > h3', li).text();
+          });
+          switch (names.length){
+            case 4: var numSpies = 2; var initialSet = [true, true, false, false]; break;
+            case 5: var numSpies = 2; var initialSet = [true, true, false, false, false]; break;
+            case 6: var numSpies = 3; var initialSet = [true, true, false, false, false]; break;
+            case 7: var numSpies = 3; var initialSet = [true, true, true,  false, false, false]; break;
+            case 8: var numSpies = 3; var initialSet = [true, true, true,  false, false, false, false]; break;
+            case 9: var numSpies = 4; var initialSet = [true, true, true,  true,  false, false, false, false]; break;
+          }
+
+          var sets = distinctSets(permutations(initialSet));
+          console.log(allSets);
+          
+        });
+      });
+    </script>
 </head> 
 
 <body> 
 
-<div data-role="page">
+<div data-role="page" id="config-page">
+    <div data-role="header">
+        <h1>Configure</h1>
+    </div>
 
-	<div data-role="header">
-		<h1>Single page</h1>
-	</div><!-- /header -->
+    <div role="main" class="ui-content">    
+        <ul id="names-list" data-role="listview" data-split-icon="minus" data-split-theme="a">
+        </ul>
+        <div class="ui-listview" data-role="listview" id="add" style="padding: 20px">
+            <input type="text" name="name" id="add-name" value="" data-inline="true" style="float:left">
+            <a href="#" id="add-name-button" data-role="button" data-icon="plus" data-iconpos="notext" data-inline="true">+</a>
+        </div>
+        <!--<div id="min-players-warning" data-icon="forbidden"><i style="color:gray">Minimum five players</i></div>-->
+        <!--<ul id="add-name-list" data-role="listview" data-split-icon="plus" data-split-theme="a">
+            <li>
+	        <a href="#"><input type="text" name="name" id="add-name" value="" style="float:left"></a>
+                <a href="#" id="add-name-button"> </a>
+            </li>
+            <li>
+                <a href="#analyze-page" data-transition="slide" >Next</a>
+            </li>
+        </ul>-->
+    </div>
+    <div data-role="footer">
+        <a href="#analyze-page" id="config-next-button" data-transition="slide" data-role=button" data-icon="carat-r" data-inline="true" data-iconpos="right" style="float:right">Next</a>
+    </div>
+</div>
 
-	<div data-role="content">	
-		<p>This is a single page boilerplate template that you can copy to build your first jQuery Mobile page. Each link or form from here will pull a new page in via Ajax to support the animated page transitions.</p>		
-		<p>Just view the source and copy the code to get started. All the CSS and JS is linked to the jQuery CDN versions so this is super easy to set up. Remember to include a meta viewport tag in the head to set the zoom level.</p>
-		<p>This template is standard HTML document with a single "page" container inside, unlike a <a href="multipage-template.html" data-ajax="false">multi-page template</a> that has multiple pages within it. We strongly recommend building your site or app as a series of separate pages like this because it's cleaner, more lightweight and works better without JavaScript.</p>
-	</div><!-- /content -->
-	
-	<div data-role="footer">
-		<h4>Footer content</h4>
-	</div><!-- /footer -->
-	
-</div><!-- /page -->
+<div data-role="page" id="analyze-page">
+    <div data-role="header">
+        <h1>Analyze</h1>
+    </div>
 
+    <div role="main" class="ui-content">    
+      <table>
+        <thead>
+          <tr>
+            <th>Player</th>
+            <th>1</th>
+            <th>2</th>
+          </tr>
+        </thead>
+        <tbody id="analyze-tbody">
+        </tbody>
+      <table>
+    </div>
+    <div data-role="footer">
+        <a href="#config-page" data-transition="slide" data-rel="back" data-role=button" data-icon="carat-l" data-inline="true" data-iconpos="left">Back</a>
+    </div>
+</div>
 </body>
 </html>
