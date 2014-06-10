@@ -307,31 +307,6 @@ function main($, _) {
         console.log('possibilities after second cull');
         console.log(applicableSets);
 
-	var namedApplicableSets = _.map(applicableSets, function(set) {
-          return _.filter(_.map(set, function(val, idx) {
-            if (val === true) {
-              console.log('adding ' + names[idx]);
-              return names[idx];
-            }
-	    else {
-              return null;
-            }
-          }), function(e) {return e !== null;});
-       });
-
-       console.log('named possibilities');
-       console.log(namedApplicableSets);
-
-       // Build results list
-       var $results = $('#results');
-       $results.children().remove();
-       _.each(namedApplicableSets, function(set) {
-         $('<li>')
-           .html(set.join(', '))
-           .appendTo($results);
-       });
-       $results.listview('refresh');
-
        // Refresh probabilities
        var initialProbabilities = _.map(initialSet, function(e) {return 0;});
        var relativeProbabilities = _.reduce(applicableSets, function(memo, set) {
@@ -349,7 +324,50 @@ function main($, _) {
            value: 100 * absoluteProbabilities[idx]
          });
        });
-       
+
+       function badness(set) {
+         var badnessValues = _.map(set, function(e, idx){
+           if (set[idx] === true) {
+             return absoluteProbabilities[idx];
+           } else {
+             return 0;
+           }
+	 });
+         return _.reduce(badnessValues, function(memo, num){return memo + num;}, 0);
+       }
+
+       // Build results list
+       var namedApplicableSets = _.map(applicableSets, function(set) {
+         // Extract names of minions only
+         var namedSet = _.filter(_.map(set, function(val, idx) {
+           if (val === true) {
+             return names[idx];
+           }
+           else {
+             return null;
+           }
+         }), function(e) {return e !== null;});
+	 // Add the badness value to the rear of the named set
+	 namedSet.push('Badness:' + badness(set).toFixed(2));
+	 return namedSet;
+       });
+       // Sort the sets by the badness value
+       namedApplicableSets = _.sortBy(namedApplicableSets, function(set) {
+	 return _.last(set);
+       });
+
+       console.log('named possibilities');
+       console.log(namedApplicableSets);
+
+       var $results = $('#results');
+       $results.children().remove();
+       _.each(namedApplicableSets.reverse(), function(set) {
+         $('<li>')
+           .html(set.join(', '))
+           .appendTo($results);
+       });
+       $results.listview('refresh');
+
     });
 }
 
