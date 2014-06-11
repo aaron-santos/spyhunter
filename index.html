@@ -15,7 +15,10 @@
         width: 80%;
         margin-right: 14px;
       }
-      #analyze-tbody td {padding: 0.5em;}
+      #analyze-tbody td {
+        padding: 0.5em;
+        padding-left: 5%;
+      }
     </style>
 </head> 
 
@@ -46,14 +49,18 @@
 
     <div data-role="content" class="ui-content">    
       <form>
-        <table>
+	<label for="goodness-offset">Goodness factor</label>
+	<input type="range" data-highlight="true", data-mini="true" min="0" max="1" step="0.01" id="goodness-val">
+        <table style="width:100%">
           <thead>
             <tr>
               <th>Player</th>
               <th>Merlin</th>
-              <th>Minion/Spy</th>
-	      <th>1st failed<br/> mission</th>
-	      <th>2nd failed<br/> mission</th>
+              <th>Minion</th>
+	      <th>1st<br/>passed<br/> mission</th>
+	      <th>2nd<br/>passed<br/> mission</th>
+	      <th>1st<br/>failed<br/> mission</th>
+	      <th>2nd<br/>failed<br/> mission</th>
               <th></th>
               <th>Prob</th>
             </tr>
